@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SERVER_URL } from '../../server/config';
 
 interface FormData {
     username: string;
@@ -8,7 +9,7 @@ interface FormData {
 const LoginForm: React.FC = () => {
 
     const [formData, setFormData] = useState<FormData>({ username: "", password: ""});
-    // const [errors, setErrors] = useState<Partial<FormData>>({});
+    const [errors, setErrors] = useState<Partial<FormData>>({});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -32,12 +33,32 @@ const LoginForm: React.FC = () => {
         return newErrors;
     }
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const validationErrors = validate();
         if (Object.keys(validationErrors).length > 0) {
             console.error("Validation errors:", validationErrors);
             return;
+        }
+
+        try {
+            const response = await fetch(`${SERVER_URL}/api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Login failed');
+        }
+        const data = await response.json();
+            console.log("Login successful:", data);
+            // Handle successful login (e.g., redirect, store token, etc.)
+        } catch (error) {
+            console.error("Login error:", error);
+            setErrors({ username: "Login failed. Please check your credentials." });
         }
     }
 
@@ -57,6 +78,7 @@ const LoginForm: React.FC = () => {
                         placeholder='Username' 
                         required
                     />
+                    {errors.username && <p className="text-red-500 text-sm">{errors.username}</p>}
                 </div>
                 <div>
                     <label htmlFor="password" className='block text-sm font-meduim'>Password:</label>
@@ -71,6 +93,7 @@ const LoginForm: React.FC = () => {
                         required
                     />
                 </div>
+                {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
                 <button
                     type='submit'
                     className='w-20 py-2 px-4 rounded-lg focus:outline-none bg-sky-400 text-white font-bold cursor-pointer'>LogIn</button>
