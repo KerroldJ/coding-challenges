@@ -4,7 +4,7 @@ import cors from 'cors';
 import { PORT, HOST } from '../server/config';
 
 
-import apiv1 from '../server/api/api_v1';
+import apiv1 from './api/v1/api_v1';
 
 
 const app = express();
